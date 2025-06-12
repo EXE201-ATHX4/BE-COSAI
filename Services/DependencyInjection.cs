@@ -1,12 +1,9 @@
 ﻿using Contract.Repositories.Interface;
+using Contract.Services.Interface;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repositories.UOW;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Services.Service;
 
 namespace Services
 {
@@ -19,6 +16,7 @@ namespace Services
         public static void AddRepositories(this IServiceCollection services)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
         }
     }
 }

@@ -1,4 +1,7 @@
 ﻿using Contract.Repositories.Entity;
+using Core.Base;
+using ModelViews.AuthModelViews;
+using ModelViews.UserModelViews;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,5 +20,7 @@ namespace Contract.Services.Interface
         Task<IEnumerable<ApplicationUserClaims>> GetUserClaimsAsync(int userId);
         Task<bool> UpdateClaimAsync(int claimId, string claimType, string claimValue, string updatedBy);
         Task<bool> SoftDeleteClaimAsync(int claimId, string deletedBy);
+        Task<BasePaginatedList<UserModelResponse>> GetAllAccounts(int pageNumber, int pageSize);
+        Task<User> AuthenticateAsync(LoginModelView model);
     }
 }

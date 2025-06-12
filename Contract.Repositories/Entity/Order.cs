@@ -18,7 +18,8 @@ namespace Contract.Repositories.Entity
         public string? PaymentMethod { get; set; }
         public string? Status { get; set; }
         public string? ShipName { get; set; }
-        public double? TotalPrice { get; set; }
+        public int? TotalPrice { get; set; }
+
 
         [ForeignKey("CustomerId")]
         public virtual User? User { get; set; }

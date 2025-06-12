@@ -3,6 +3,8 @@ using Services;
 using Microsoft.EntityFrameworkCore;
 using Contract.Services.Interface;
 using Services.Service;
+using Net.payOS;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Web
 {
@@ -15,6 +17,9 @@ namespace Web
             //services.AddIdentity();
             services.AddInfrastructure(configuration);
             services.AddServices();
+            services.AddPayment(configuration);
+            services.ConfigureServices();
+
         }
         public static void ConfigRoute(this IServiceCollection services)
         {
@@ -22,6 +27,13 @@ namespace Web
             {
                 options.LowercaseUrls = true;
             });
+        }
+        public static void AddPayment(this IServiceCollection services, IConfiguration configuration)
+        {
+            PayOS payOS = new PayOS(configuration["PayOS:PAYOS_CLIENT_ID"] ?? throw new Exception("Cannot find environment"),
+                    configuration["PayOS:PAYOS_API_KEY"] ?? throw new Exception("Cannot find environment"),
+                    configuration["PayOS:PAYOS_CHECKSUM_KEY"] ?? throw new Exception("Cannot find environment"));
+            services.AddSingleton(payOS);
         }
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
@@ -34,7 +46,17 @@ namespace Web
         public static void AddServices(this IServiceCollection services)
         {
             services
+                .AddScoped<ICartService, CartService>()
+                .AddScoped<IOrderService, OrderService>()
+                .AddScoped<IUserService, UserService>()
+                .AddTransient<IEmailSender, EmailSender>()
+                .AddScoped<TokenService>()
                 .AddScoped<ICateogoryService, CateogoryService>();
+        }
+        public static void ConfigureServices(this IServiceCollection services)
+        {
+            services.AddHostedService<PaymentProcessingService>();
+            services.AddMemoryCache();
         }
     }
 }

@@ -1,14 +1,17 @@
 ﻿using Contract.Repositories.Entity;
 using Contract.Services.Interface;
+using Core.Utils;
 using FirebaseAdmin.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using ModelViews.AuthModelViews;
+using Newtonsoft.Json.Linq;
 using Services.Service;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Web.Controllers
@@ -20,58 +23,120 @@ namespace Web.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IUserService _userService;
         private readonly TokenService _tokenService;
+        private readonly IEmailSender _emailSender;
         private readonly ILogger<AuthController> _logger;
-        public AuthController(IUserService userService, TokenService tokenService, ILogger<AuthController> logger, UserManager<User> userManager)
+        private readonly IConfiguration _configuration;
+        private readonly ICartService _cartService;
+        public AuthController(IUserService userService, TokenService tokenService, ILogger<AuthController> logger, UserManager<User> userManager, IConfiguration configuration, IEmailSender emailSender, ICartService cartService)
         {
             _userManager = userManager;
             _userService = userService;
             _tokenService = tokenService;
             _logger = logger;
+            _configuration = configuration;
+            _emailSender = emailSender;
+            _cartService = cartService;
+        }
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] CreateAccountModel model)
+        {
+            _logger.LogInformation("Received registration request for email: {Email}", model.Email);
+
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null && existingUser.EmailConfirmed)
+            {
+                _logger.LogWarning("Email already registered: {Email}", model.Email);
+                return BadRequest("Email is already registered.");
+            }
+
+            var user = new User
+            {
+                UserName = model.Email.Split('@')[0],
+                Email = model.Email,
+                CreatedTime = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                CreatedBy = model.Email,
+                LastUpdatedBy = model.Email,
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to create account: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
+                return BadRequest(result.Errors);
+            }
+
+            await _userService.AddRoleToAccountAsync(user.Id, "Customer");
+
+            // Generate email confirmation token
+            SendEmail(user);
+            return Ok("Registration successful! Please check your email to confirm your account.");
+        }
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        {
+            if (userId == null || code == null)
+                return BadRequest("Invalid email confirmation request.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+            if (result.Succeeded)
+                return Content("Email confirmed successfully! You may now log in.");
+            else
+                return BadRequest("Email confirmation failed.");
         }
 
-        //[HttpPost("login")]
-        //[AllowAnonymous]
-        //public async Task<IActionResult> GoogleSignIn([FromBody] string request)
-        //{
-        //    Account acc = new Account();
-        //    try
-        //    {
-        //        var payload = await GoogleJsonWebSignature.ValidateAsync(request);
+        private async Task SendEmail(User user)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var tokenEncoded = Uri.EscapeDataString(token);
+            var confirmUrl = $"{_configuration["App:BaseUrl"]}auth/confirm-email?userId={user.Id}&code={tokenEncoded}";
 
-        //        if (payload == null)
-        //            return BadRequest("Invalid Google token");
-        //        Console.WriteLine(payload.Email);
-        //        var user = await _userService.GetUserByEmail(payload.Email);
-        //        //check user don't exist create user
-        //        if (user == null)
-        //        {
+            var body = $@"<p>Welcome {user.Email},</p><p>Click the button below to confirm your email:</p><a href='{confirmUrl}' style='padding:10px 20px;background:#28a745;color:white;border-radius:5px;text-decoration:none;'>Confirm Email</a>
+";
+            await _emailSender.SendEmailAsync(user.Email, "Confirm your account", body);
+            _logger.LogInformation("Account created. Confirmation email sent to: {Email}", user.Email);
+        }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModelView model)
+        {
+            _logger.LogInformation("Received login request for username: {Username}", model.EmailAddress);
 
-        //            user = new Account
-        //            {
-        //                UserName = payload.Email.Split("@")[0],
-        //                Email = payload.Email,
-        //                FullName = payload.Name,
-        //                CreatedBy = payload.Name,
-        //                CreatedTime = DateTime.UtcNow,
-        //                LastUpdatedBy = payload.Name,
-        //                LastUpdatedTime = DateTime.UtcNow
+            // Authenticate user
+            User account = await _userService.AuthenticateAsync(model);
+            if (account != null && !account.EmailConfirmed)
+            {
+                SendEmail(account);
+                return BadRequest("Your account is not comfirmed");
+            }
+            if (account == null)
+            {
+                _logger.LogWarning("Invalid credentials for username: {Username}", model.EmailAddress);
+                return Unauthorized("Invalid credentials");
+            }
+            var anonymousId = CartHelper.GetCartId(HttpContext);
 
-        //            };
+            // Gộp giỏ hàng
+            await _cartService.MergeCartsOnLoginAsync(anonymousId!, account.Id.ToString());
 
-        //            user = await _userService.CreateAccountAsync(user);
-        //            var role = await _userService.AddRoleToAccountAsync(user.Id, "Patient"); 
-        //        }
-        //        Console.WriteLine("User ID" + user.Id.ToString());
-        //        var jwtToken = _tokenService.GenerateJwtTokenAsync(user);
-        //        return Ok(new { token = jwtToken, user });
-        //    }
-        //    catch
-        //    {
-        //        return BadRequest("Google authentication failed");
-        //    }
-        //}
+            // Xóa cookie CartId tạm (nếu muốn)
+            HttpContext.Response.Cookies.Delete("CartId");
+            var token = await _tokenService.GenerateJwtTokenAsync(account);
+            var refreshToken = _tokenService.GenerateRefreshToken(account);
+            _logger.LogInformation("Login successful for user: {UserName}", account.UserName);
+
+            return Ok(new
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken.Result
+            });
+        }
+
         [HttpPost("firebase-login")]
-        public async Task<IActionResult> GoogleLogin([FromBody] string request)
+        public async Task<IActionResult> FirebaseLogin([FromBody] string request)
         {
             try
             {
@@ -87,11 +152,13 @@ namespace Web.Controllers
                     user = new User
                     {
                         
+                        UserName = email,
+                        Email = email,
                         CreatedBy = fullName,
                         LastUpdatedBy = fullName,
                     };
                     var result = await _userManager.CreateAsync(user);
-                    await _userService.AddRoleToAccountAsync(user.Id, "Patient");
+                    await _userService.AddRoleToAccountAsync(user.Id, "Customer");
                     if (!result.Succeeded)
                     {
                         return BadRequest(result.Errors);
@@ -101,36 +168,15 @@ namespace Web.Controllers
                 // Tạo JWT token để gửi về frontend
 
                 var token = await _tokenService.GenerateJwtTokenAsync(user);
+                var refreshToken = _tokenService.GenerateRefreshToken(user);
                 var role = await _userManager.GetRolesAsync(user);
 
-                return Ok(new { Message = "Login successful", Token = token, Email = email, UserId = user.Id, Role = role });
+                return Ok(new { Message = "Login successful", AccessToken = token, RefreshToken = refreshToken, Email = email, UserId = user.Id, Role = role });
             }
             catch
             {
                 return Unauthorized(new { Message = "Invalid token" });
             }
-        }
-        private string GenerateJwtToken(User user)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("hoqee0yaZ7jg1kBiii75VNA4fAuWPTA0A9pVY5W+XKV8IAf+99yvEMjIWLGAWYOU2iFrGL+Ct7FupbTX2LYzXQ=="));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.UserName)
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: "yourdomain.com",
-                audience: "yourdomain.com",
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
         [Authorize] // Bắt buộc có JWT Token
         [HttpGet("validation")]

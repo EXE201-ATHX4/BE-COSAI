@@ -14,7 +14,6 @@ namespace Contract.Repositories.Entity
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Đảm bảo tự động tăng
         public override int Id { get; set; }
-        public string? UserName { get; set; }
         public string? CreatedBy { get; set; }
         public string? LastUpdatedBy { get; set; }
         public string? DeletedBy { get; set; }

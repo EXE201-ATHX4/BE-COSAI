@@ -1,5 +1,6 @@
 ﻿using Contract.Services.Interface;
 using Core.Base;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ModelViews.CategoryModelViews;
 
@@ -18,6 +19,7 @@ namespace Web.Controllers
         }
         // GET: api/<CategoryController>
         [HttpGet]
+        [Authorize]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };

@@ -13,6 +13,5 @@ namespace ModelViews.AuthModelViews
        
         public string EmailAddress { get; set; }
         public string Password { get; set; }
-        public List<AuthenticationSchemes> Schemes { get; set; }
     }
 }

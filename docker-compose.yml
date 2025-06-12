@@ -1,0 +1,28 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-db
+    restart: always
+    environment:
+      SA_PASSWORD: "12345"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  web:
+    build:
+      context: .       # path to your ASP.NET project folder
+      dockerfile: Web/Dockerfile      # name of the Dockerfile inside that folder
+    container_name: cosmetics-api
+    depends_on:
+      - sqlserver
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=ComesticsSales;User Id=sa;Password=12345"
+    ports:
+      - "5200:70"
+    restart: always
+
+volumes:
+  sql_data:

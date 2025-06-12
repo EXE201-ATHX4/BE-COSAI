@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Services.Service
@@ -58,10 +59,50 @@ namespace Services.Service
 
             return tokenString;
         }
+        public async Task<string> GenerateRefreshToken(User user)
+        {
+            var randomBytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            var refreshToken = Convert.ToBase64String(randomBytes);
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+            var tokenRepo = _unitOfWork.GetRepository<ApplicationUserTokens>();
+            var existing = await tokenRepo.Entities
+                .FirstOrDefaultAsync(t => t.UserId == user.Id);
+
+            if (existing != null)
+            {
+                existing.RefreshToken = refreshToken;
+                existing.RefreshTokenExpiryTime = refreshTokenExpiry;
+                existing.LastUpdatedBy = user.UserName;
+                existing.LastUpdatedTime = DateTime.UtcNow;
+                await tokenRepo.UpdateAsync(existing);
+            }
+            else
+            {
+                await tokenRepo.InsertAsync(new ApplicationUserTokens
+                {
+                    UserId = user.Id,
+                    LoginProvider = "CustomLoginProvider",
+                    Name = "RefreshToken",
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiryTime = refreshTokenExpiry,
+                    CreatedBy = user.UserName,
+                    CreatedTime = DateTime.UtcNow,
+                    LastUpdatedBy = user.UserName,
+                    LastUpdatedTime = DateTime.UtcNow
+                });
+            }
+
+            await _unitOfWork.SaveAsync();
+            return refreshToken;
+        }
 
         private async Task AddTokenToDatabaseAsync(int userId, string tokenString)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
+            var refreshToken = Guid.NewGuid().ToString(); // Use a secure random generator in production
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
             Console.WriteLine("UserID token" + user.Id);
             if (user != null)
             {
@@ -79,6 +120,8 @@ namespace Services.Service
                     {
                         // Cập nhật token hiện tại
                         existingToken.Value = tokenString;
+                        existingToken.RefreshToken = refreshToken;
+                        existingToken.RefreshTokenExpiryTime = refreshTokenExpiry;
                         existingToken.LastUpdatedBy = user.UserName;
                         existingToken.LastUpdatedTime = CoreHelper.SystemTimeNow;
 
@@ -93,6 +136,8 @@ namespace Services.Service
                             LoginProvider = "CustomLoginProvider",
                             Name = "JWT",
                             Value = tokenString,
+                            RefreshToken = refreshToken,
+                            RefreshTokenExpiryTime = refreshTokenExpiry,
                             CreatedBy = user.UserName,
                             CreatedTime = CoreHelper.SystemTimeNow,
                             LastUpdatedBy = user.UserName,

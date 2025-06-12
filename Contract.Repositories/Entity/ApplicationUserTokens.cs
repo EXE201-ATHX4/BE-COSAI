@@ -7,6 +7,8 @@ namespace Contract.Repositories.Entity
 {
     public class ApplicationUserTokens : IdentityUserToken<int>
     {
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
         public string? CreatedBy { get; set; }
         public string? LastUpdatedBy { get; set; }
         public string? DeletedBy { get; set; }
