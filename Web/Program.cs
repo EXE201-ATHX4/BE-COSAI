@@ -19,9 +19,10 @@ namespace Web
     {
         public static void Main(string[] args)
         {
+            var firebaseKeyJson = Environment.GetEnvironmentVariable("FIREBASE_KEY_JSON");
             FirebaseApp.Create(new AppOptions()
             {
-                Credential = GoogleCredential.FromFile("Config/serviceAccountKey.json")
+                Credential = GoogleCredential.FromJson(firebaseKeyJson)
             });
             var builder = WebApplication.CreateBuilder(args);
 

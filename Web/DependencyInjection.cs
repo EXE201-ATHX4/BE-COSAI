@@ -5,6 +5,7 @@ using Contract.Services.Interface;
 using Services.Service;
 using Net.payOS;
 using Microsoft.Extensions.Caching.Memory;
+using System;
 
 namespace Web
 {
@@ -42,6 +43,9 @@ namespace Web
                 options.UseLazyLoadingProxies().UseSqlServer(configuration.GetConnectionString("DBConnection"), b =>
         b.MigrationsAssembly("Repositories"));
             });
+            //services.AddDbContext<ComesticsSalesDBContext>(options =>
+            //options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
         }
         public static void AddServices(this IServiceCollection services)
         {
