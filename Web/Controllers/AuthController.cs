@@ -168,7 +168,7 @@ namespace Web.Controllers
                 // Tạo JWT token để gửi về frontend
 
                 var token = await _tokenService.GenerateJwtTokenAsync(user);
-                var refreshToken = _tokenService.GenerateRefreshToken(user);
+                var refreshToken = await _tokenService.GenerateRefreshToken(user);
                 var role = await _userManager.GetRolesAsync(user);
 
                 return Ok(new { Message = "Login successful", AccessToken = token, RefreshToken = refreshToken, Email = email, UserId = user.Id, Role = role });

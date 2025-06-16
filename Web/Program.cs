@@ -11,7 +11,6 @@ using Microsoft.OpenApi.Models;
 using Repositories.Base;
 using StackExchange.Redis;
 using System.Text;
-using System.Text.Json.Serialization;
 
 namespace Web
 {
@@ -19,13 +18,17 @@ namespace Web
     {
         public static void Main(string[] args)
         {
-            var firebaseKeyJson = Environment.GetEnvironmentVariable("FIREBASE_KEY_JSON");
+            DotNetEnv.Env.Load();
+            //var base64 = Environment.GetEnvironmentVariable("FIREBASE_KEY_JSON");
+           
+            
+            var builder = WebApplication.CreateBuilder(args);
+            var firebase = builder.Configuration["FIREBASE_KEY_JSON"];
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(firebase));
             FirebaseApp.Create(new AppOptions()
             {
-                Credential = GoogleCredential.FromJson(firebaseKeyJson)
+                Credential = GoogleCredential.FromJson(json)
             });
-            var builder = WebApplication.CreateBuilder(args);
-
             // Add services to the container.
 
             builder.Services.AddControllers();
