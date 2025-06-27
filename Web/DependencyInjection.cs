@@ -50,6 +50,8 @@ namespace Web
         public static void AddServices(this IServiceCollection services)
         {
             services
+                .AddScoped<GeminiService>()
+                .AddScoped<IChatService, ChatService>()
                 .AddScoped<ICartService, CartService>()
                 .AddScoped<IOrderService, OrderService>()
                 .AddScoped<IUserService, UserService>()

@@ -25,6 +25,8 @@ namespace Repositories.Base
         public DbSet<ShipmentStatusHistory> ShipmentStatusHistories { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<UserInfo> UserInfo { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -46,6 +48,8 @@ namespace Repositories.Base
             modelBuilder.Entity<ShipmentStatusHistory>().Property(mg => mg.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<ShippingAddress>().Property(hr => hr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Supplier>().Property(b => b.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<Conversation>().Property(b => b.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<Message>().Property(b => b.Id).ValueGeneratedOnAdd();
         }
     }
 }

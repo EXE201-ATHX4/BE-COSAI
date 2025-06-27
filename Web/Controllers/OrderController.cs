@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using ModelViews.OrderModelViews;
 using Contract.Services.Interface;
 using Contract.Repositories.Entity;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Web.Controllers
 {
@@ -26,6 +27,7 @@ namespace Web.Controllers
         }
 
         [HttpPost("create")]
+        [SwaggerOperation(Summary = "Tạo đơn hàng mới", Description = "API này dùng để tạo đơn hàng mới từ phía client.")]
         public async Task<IActionResult> CreatePaymentLink(CreatePaymentLinkRequest body)
         {
             try
