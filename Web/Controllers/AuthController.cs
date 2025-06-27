@@ -84,7 +84,10 @@ namespace Web.Controllers
 
             var result = await _userManager.ConfirmEmailAsync(user, code);
             if (result.Succeeded)
-                return Content("Email confirmed successfully! You may now log in.");
+            {
+                // Redirect to your frontend login page after successful confirmation
+                return Redirect("https://cosai.netlify.app/login");
+            }
             else
                 return BadRequest("Email confirmation failed.");
         }
@@ -120,10 +123,10 @@ namespace Web.Controllers
             var anonymousId = CartHelper.GetCartId(HttpContext);
 
             // Gộp giỏ hàng
-            await _cartService.MergeCartsOnLoginAsync(anonymousId!, account.Id.ToString());
+            //await _cartService.MergeCartsOnLoginAsync(anonymousId!, account.Id.ToString());
 
             // Xóa cookie CartId tạm (nếu muốn)
-            HttpContext.Response.Cookies.Delete("CartId");
+            //HttpContext.Response.Cookies.Delete("CartId");
             var token = await _tokenService.GenerateJwtTokenAsync(account);
             var refreshToken = _tokenService.GenerateRefreshToken(account);
             _logger.LogInformation("Login successful for user: {UserName}", account.UserName);

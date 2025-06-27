@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Service;
+using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 
 namespace Web.Controllers
@@ -18,6 +19,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
+        [SwaggerOperation(Summary = "API hỏi gimini", Description = "API này dùng để tạo đơn hàng mới từ phía client.")]
         public async Task<IActionResult> Chat([FromBody] string message)
         {
             if (string.IsNullOrWhiteSpace(message))
