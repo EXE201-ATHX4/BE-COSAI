@@ -34,7 +34,11 @@ namespace Web
         public static void AddServices(this IServiceCollection services)
         {
             services
-                .AddScoped<ICateogoryService, CateogoryService>();
+                .AddScoped<ICategoryService, CategoryService>();
+                //.AddScoped<interface>
+                
         }
+
+        
     }
 }

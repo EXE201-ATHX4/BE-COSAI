@@ -7,63 +7,182 @@ using ModelViews.CategoryModelViews;
 
 namespace Web.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController : ControllerBase
+    [Route("api/[controller]")]
+    public class CategoriesController : ControllerBase
     {
-        private readonly ICateogoryService _categoryService;
-        public CategoryController(ICateogoryService categoryService)
+        private readonly ICategoryService _categoryService;
+        private readonly ILogger<CategoriesController> _logger;
+
+        public CategoriesController(ICategoryService categoryService, ILogger<CategoriesController> logger)
         {
             _categoryService = categoryService;
+            _logger = logger;
         }
-        // GET: api/<CategoryController>
+
         [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<CategoryController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<CategoryController>
-        [HttpPost]
-        public async Task<IActionResult> AddCategory([FromBody] CreateCategoryModel model)
+        public async Task<ActionResult<List<CategoryModel>>> GetCategories([FromQuery] int? parentId = null)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(model.Name))
-                {
-                    throw new ArgumentException("Name is required and cannot be empty or whitespace.");
-                }
-
-                if (model.Name.Length > 255)
-                {
-                    throw new ArgumentException("Name cannot exceed 255 characters.");
-                }
-                var cate = await _categoryService.CreateCategory(model);
-                return !cate ? BadRequest("Category already exists") : Ok("Create successful"); // return cate created
+                var categories = await _categoryService.GetCategoriesByParentIdAsync(parentId);
+                return Ok(categories);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                _logger.LogError(ex, "Error getting categories");
+                return StatusCode(500, "Internal server error");
             }
         }
 
-        // PUT api/<CategoryController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+
+        [HttpGet("active")]
+        public async Task<ActionResult<List<CategoryModel>>> GetActiveCategories()
         {
+            try
+            {
+                var categories = await _categoryService.GetActiveCategoriesAsync();
+                return Ok(categories);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting active categories");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE api/<CategoryController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CategoryModel>> GetCategory(int id)
         {
+            try
+            {
+                var category = await _categoryService.GetCategoryByIdAsync(id);
+                if (category == null)
+                    return NotFound();
+
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting category {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("{id}/breadcrumb")]
+        public async Task<ActionResult<List<CategoryModel>>> GetBreadcrumb(int id)
+        {
+            try
+            {
+                var breadcrumb = await _categoryService.GetBreadcrumbAsync(id);
+                return Ok(breadcrumb);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting breadcrumb for category {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<CategoryModel>> CreateCategory([FromBody] CreateCategoryModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var category = await _categoryService.CreateCategoryAsync(model);
+                return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating category");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<CategoryModel>> UpdateCategory(int id, [FromBody] UpdateCategoryModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var category = await _categoryService.UpdateCategoryAsync(id, model);
+                if (category == null)
+                    return NotFound();
+
+                return Ok(category);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating category {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteCategory(int id)
+        {
+            try
+            {
+                if (!await _categoryService.CanDeleteCategoryAsync(id))
+                    return BadRequest("Cannot delete category that has subcategories or products");
+
+                var result = await _categoryService.DeleteCategoryAsync(id);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting category {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("{id}/move")]
+        public async Task<ActionResult> MoveCategory(int id, [FromBody] MoveCategoryModel model)
+        {
+            try
+            {
+                var result = await _categoryService.MoveCategoryAsync(id, model.NewParentId, model.NewDisplayOrder);
+                if (!result)
+                    return BadRequest("Cannot move category");
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error moving category {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("{id}/can-delete")]
+        public async Task<ActionResult<bool>> CanDeleteCategory(int id)
+        {
+            try
+            {
+                var canDelete = await _categoryService.CanDeleteCategoryAsync(id);
+                return Ok(canDelete);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if category can be deleted {CategoryId}", id);
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }
