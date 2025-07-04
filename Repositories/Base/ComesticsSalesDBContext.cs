@@ -15,6 +15,7 @@ namespace Repositories.Base
         public virtual DbSet<ApplicationRoleClaims> RoleClaims => Set<ApplicationRoleClaims>();
         public virtual DbSet<ApplicationUserTokens> UserTokens => Set<ApplicationUserTokens>();
         public DbSet<Order> Orders { get; set; }
+        public DbSet<Brand> Brands { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Review> Reviews { get; set; }
@@ -50,6 +51,7 @@ namespace Repositories.Base
             modelBuilder.Entity<Supplier>().Property(b => b.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Conversation>().Property(b => b.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Message>().Property(b => b.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<Brand>().Property(b => b.Id).ValueGeneratedOnAdd();
         }
     }
 }

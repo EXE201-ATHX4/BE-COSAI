@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ModelViews.CategoryModelViews
 {
-    public class CreateCategoryModel
+    public class UpdateCategoryModel
     {
         [Required]
         [StringLength(200)]
@@ -17,9 +17,9 @@ namespace ModelViews.CategoryModelViews
         public string Description { get; set; } = string.Empty;
 
         public int? ParentId { get; set; }
-        public int DisplayOrder { get; set; } = 0;
-        public bool IsActive { get; set; } = true;
-        public bool AllowProducts { get; set; } = true;
-        public bool ShowInMenu { get; set; } = true;
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; }
+        public bool AllowProducts { get; set; }
+        public bool ShowInMenu { get; set; }
     }
 }

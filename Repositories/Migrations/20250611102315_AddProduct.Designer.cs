@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Base;
 
@@ -11,9 +12,11 @@ using Repositories.Base;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(ComesticsSalesDBContext))]
-    partial class ComesticsSalesDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250611102315_AddProduct")]
+    partial class AddProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -258,12 +261,6 @@ namespace Repositories.Migrations
                     b.Property<DateTimeOffset?>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
 
@@ -326,56 +323,6 @@ namespace Repositories.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Conversations");
-                });
-
-            modelBuilder.Entity("Contract.Repositories.Entity.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ConversationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
-
-                    b.ToTable("Messages");
-                });
-
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -420,8 +367,8 @@ namespace Repositories.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TotalPrice")
-                        .HasColumnType("int");
+                    b.Property<double?>("TotalPrice")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -462,8 +409,8 @@ namespace Repositories.Migrations
                     b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Price")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("ProductId")
                         .HasColumnType("int");
@@ -1023,26 +970,6 @@ namespace Repositories.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
-                {
-                    b.HasOne("Contract.Repositories.Entity.User", "User")
-                        .WithMany("Conversations")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Contract.Repositories.Entity.Message", b =>
-                {
-                    b.HasOne("Contract.Repositories.Entity.Conversation", "Conversation")
-                        .WithMany("Messages")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Conversation");
-                });
-
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
                 {
                     b.HasOne("Contract.Repositories.Entity.User", "User")
@@ -1145,11 +1072,6 @@ namespace Repositories.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
-                {
-                    b.Navigation("Messages");
-                });
-
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
                 {
                     b.Navigation("OrderDetails");
@@ -1179,8 +1101,6 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Contract.Repositories.Entity.User", b =>
                 {
-                    b.Navigation("Conversations");
-
                     b.Navigation("Orders");
 
                     b.Navigation("Reviews");
