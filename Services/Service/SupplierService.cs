@@ -58,6 +58,19 @@ namespace Services.Service
             {
                 var supplier = await _unitOfWork.GetRepository<Supplier>().Entities.FirstOrDefaultAsync(c => c.Id == supplierId);
                 var user = await _unitOfWork.GetRepository<User>().Entities.FirstOrDefaultAsync(c => c.Id == userId && !c.DeletedTime.HasValue);
+                if (supplier == null)
+                {
+                    return new BaseResponse<bool>(StatusCodeHelper.Notfound, "404", "Supplier not found");
+                }
+
+                // Kiểm tra khóa ngoại ở bảng Product
+                var hasProducts = await _unitOfWork.GetRepository<Product>()
+                    .Entities.AnyAsync(p => p.Supplier.Id == supplierId);
+
+                if (hasProducts)
+                {
+                    return new BaseResponse<bool>(StatusCodeHelper.BadRequest, "409", "Cannot delete supplier because it is referenced by products.");
+                }
                 supplier.DeletedBy = user.UserName;
                 supplier.DeletedTime = CoreHelper.SystemTimeNows;
                 await _unitOfWork.GetRepository<Supplier>().UpdateAsync(supplier);

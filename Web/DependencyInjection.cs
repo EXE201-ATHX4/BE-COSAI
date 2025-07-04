@@ -51,6 +51,7 @@ namespace Web
         {
             services
                 .AddScoped<GeminiService>()
+                .AddScoped<IProductService, ProductService>()
                 .AddScoped<ISupplierService, SupplierService>()
                 .AddScoped<IChatService, ChatService>()
                 .AddScoped<ICartService, CartService>()
@@ -58,7 +59,7 @@ namespace Web
                 .AddScoped<IUserService, UserService>()
                 .AddTransient<IEmailSender, EmailSender>()
                 .AddScoped<TokenService>()
-                .AddScoped<ICateogoryService, CateogoryService>();
+                .AddScoped<ICategoryService, CategoryService>();
         }
         public static void ConfigureServices(this IServiceCollection services)
         {
