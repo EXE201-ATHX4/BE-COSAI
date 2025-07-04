@@ -10,6 +10,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.SERVICES", "2.SERVICES", "{75B9E0EB-0E3D-46DA-B95B-64B102DFE85B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.REPOSITORIES", "3.REPOSITORIES", "{B578AA95-5FDE-4102-BBDF-6C93FD5E4127}"
+	ProjectSection(SolutionItems) = preProject
+		Services\Service\UserService.cs = Services\Service\UserService.cs
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.CORE", "4.CORE", "{A97DD8D9-AADA-42C1-B86A-4F252390088E}"
 EndProject

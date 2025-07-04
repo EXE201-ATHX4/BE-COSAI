@@ -1,6 +1,8 @@
-﻿using Contract.Repositories.Entity;
+﻿using Castle.Core.Configuration;
+using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
+using Core.Utils;
 using Microsoft.EntityFrameworkCore;
 using ModelViews.AIModelViews;
 using System;
@@ -15,11 +17,35 @@ namespace Services.Service
     {
         private readonly GeminiService _geminiService;
         private readonly IUnitOfWork _unitOfWork;
-
         public ChatService(IUnitOfWork db, GeminiService geminiService)
         {
             _unitOfWork = db;
             _geminiService = geminiService;
+        }
+
+        public async Task<List<Chatresponse>> ChatHistoryAsync(int userId)
+        {
+            var conversationRepo = _unitOfWork.GetRepository<Conversation>();
+            var messageRepo = _unitOfWork.GetRepository<Message>();
+
+            Conversation? conversation;
+            conversation = await conversationRepo.Entities
+                .Include(c => c.Messages)
+                .Where(c => c.UserId == userId)
+                .OrderByDescending(c => c.CreatedAt)
+                .FirstOrDefaultAsync();
+            if (conversation == null)
+            {
+                return new List<Chatresponse> { };
+            }
+            return conversation.Messages
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new Chatresponse
+                {
+                    Role = m.Role,
+                    Content = m.Content,
+                    Timestamp = m.Timestamp
+                }).ToList();
         }
 
         public async Task<string> ProcessUserMessageAsync(int userId, string message)
@@ -37,7 +63,7 @@ namespace Services.Service
                 conversation = new Conversation
                 {
                     UserId = userId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = CoreHelper.SystemTimeNow
                 };
 
                 await conversationRepo.InsertAsync(conversation);
@@ -49,7 +75,7 @@ namespace Services.Service
             {
                 Role = "user",
                 Content = message,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = CoreHelper.SystemTimeNow,
                 ConversationId = conversation.Id
             };
             await messageRepo.InsertAsync(userMessage);
@@ -112,5 +138,6 @@ namespace Services.Service
 
             return aiResponse;
         }
+
     }
 }

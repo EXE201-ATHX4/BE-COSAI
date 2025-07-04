@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repositories.Base;
+using Services.Mappings;
 using Services.Service;
 using StackExchange.Redis;
 using System.Text;
@@ -43,11 +44,8 @@ namespace Web
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<ComesticsSalesDBContext>()
                 .AddDefaultTokenProviders();
-            //builder.Services.AddSingleton(provider =>
-            //{
-            //    var config = provider.GetRequiredService<IConfiguration>();
-            //    return new GeminiService(config);
-            //});
+            // Configure AutoMapper
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAllOrigins",

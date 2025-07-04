@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static ModelViews.AIModelViews.GeminiModels;
 
 namespace ModelViews.AIModelViews
 {
@@ -28,6 +29,13 @@ namespace ModelViews.AIModelViews
         {
             public List<Candidate> candidates { get; set; }
         }
+      
+    }
+    public class Chatresponse()
+    {
+        public string Role { get; set; }
+        public string Content { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
 
     }
 }

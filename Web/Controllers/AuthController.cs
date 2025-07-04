@@ -175,6 +175,7 @@ namespace Web.Controllers
                 var role = await _userManager.GetRolesAsync(user);
 
                 return Ok(new { Message = "Login successful", AccessToken = token, RefreshToken = refreshToken, Email = email, UserId = user.Id, Role = role });
+
             }
             catch
             {

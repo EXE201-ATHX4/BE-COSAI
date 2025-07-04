@@ -13,6 +13,6 @@ namespace Contract.Repositories.Entity
         public virtual Conversation Conversation { get; set; } = null!;
         public string Role { get; set; } = null!; // "user" hoặc "model"
         public string Content { get; set; } = null!;
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTimeOffset Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

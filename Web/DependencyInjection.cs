@@ -51,6 +51,7 @@ namespace Web
         {
             services
                 .AddScoped<GeminiService>()
+                .AddScoped<ISupplierService, SupplierService>()
                 .AddScoped<IChatService, ChatService>()
                 .AddScoped<ICartService, CartService>()
                 .AddScoped<IOrderService, OrderService>()
