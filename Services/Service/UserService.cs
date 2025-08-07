@@ -8,6 +8,8 @@ using Core.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ModelViews.AuthModelViews;
+using ModelViews.ProductModelViews;
+using ModelViews.SupplierModelViews;
 using ModelViews.UserModelViews;
 
 namespace Services.Service
@@ -323,5 +325,64 @@ namespace Services.Service
         {
             throw new NotImplementedException();
         }
+
+        public async Task<BaseResponse<UserInfoModel>> CreateInfoModelAsync(CreateUserInfo model, int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.GetRepository<User>().Entities.FirstOrDefaultAsync(c => c.Id == userId && !c.DeletedTime.HasValue);
+                if (user == null)
+                {
+                    return new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "User not found");
+                }
+                var userInfo = _mapper.Map<UserInfo>(model);
+                await _unitOfWork.GetRepository<UserInfo>().InsertAsync(userInfo);
+                await _unitOfWork.SaveAsync();
+                var userInfoDto = _mapper.Map<UserInfoModel>(userInfo);
+
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.OK, "200", "Create successfully");
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.BadRequest, "400", "An error occurred while creating the Product");
+            }
+        }
+
+        public async Task<BaseResponse<UserInfoModel>> UpdateUserInfotAsync(UserInfoModel model, int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.GetRepository<User>()
+                    .Entities
+                    .Include(u => u.UserInfo) // đảm bảo include UserInfo
+                    .FirstOrDefaultAsync(c => c.Id == userId && !c.DeletedTime.HasValue);
+
+                if (user == null || user.UserInfo == null)
+                {
+                    return new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "404", "User not found");
+                }
+
+                // Cập nhật thông tin từ model
+                user.UserInfo.FullName = model.FullName ?? user.UserInfo.FullName;
+                user.UserInfo.Bio = model.Bio ?? user.UserInfo.Bio;
+                user.UserInfo.Gender = model.Gender ?? user.UserInfo.Gender;
+                user.UserInfo.Address = model.Address ?? user.UserInfo.Address;
+                user.UserInfo.DateOfBirth = model.DateOfBirth ?? user.UserInfo.DateOfBirth;
+                user.UserInfo.PhoneNumber = model.PhoneNumber ?? user.UserInfo.PhoneNumber;
+                user.UserInfo.LastUpdatedBy = user.UserName;
+                user.UserInfo.LastUpdatedTime = CoreHelper.SystemTimeNow;
+                await _unitOfWork.GetRepository<UserInfo>().UpdateAsync(user.UserInfo);
+                await _unitOfWork.SaveAsync();
+
+                var userInfoDto = _mapper.Map<UserInfoModel>(user.UserInfo);
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.OK, "200", userInfoDto, "User info updated successfully");
+            }
+            catch (Exception ex)
+            {
+                // Log exception nếu cần
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "An error occurred while updating user info");
+            }
+        }
+
     }
 }

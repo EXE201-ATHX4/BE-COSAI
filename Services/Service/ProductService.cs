@@ -46,7 +46,8 @@ namespace Services.Service
                     Category = category,
                     Supplier = supplier,
                     CreatedTime = CoreHelper.SystemTimeNow,
-                    CreatedBy = user.UserName
+                    CreatedBy = user.UserName,
+                    Quantity = model.Quantity
                 };
                 if (model.ImageUrls?.Any() == true)
                 {

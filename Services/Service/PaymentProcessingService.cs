@@ -1,4 +1,5 @@
 ﻿using Contract.Repositories.Entity;
+using Core.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using ModelViews.OrderModelViews;
 using Net.payOS;
 using Repositories.Base;
+using System.Runtime.ConstrainedExecution;
 
 namespace Services.Service
 {
@@ -89,6 +91,7 @@ namespace Services.Service
                             // Sau đó gán vào Order
                             var order = new Order
                             {
+                                OrderDate = CoreHelper.SystemTimeNow.DateTime,
                                 CreatedTime = DateTime.UtcNow,
                                 TotalPrice = info.amount,
                                 Status = info.status,

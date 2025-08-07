@@ -25,6 +25,7 @@ namespace Services.Mappings
             .ForMember(dest => dest.Category, opt => opt.Ignore())
             .ForMember(dest => dest.Supplier, opt => opt.Ignore());
             CreateMap<UserInfo, UserInfoModel>().ReverseMap();
+            CreateMap<UserInfo, CreateUserInfo>().ReverseMap();
             CreateMap<Brand, BrandModel>().ReverseMap();
         }
     }

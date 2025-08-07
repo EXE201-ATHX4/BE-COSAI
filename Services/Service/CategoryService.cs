@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Contract.Repositories.Entity;
+﻿using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ModelViews.CategoryModelViews;
+using Repositories.UOW;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 namespace Services.Service
 {
     public class CategoryService : ICategoryService
@@ -291,7 +292,7 @@ namespace Services.Service
 
                 if (category == null) return false;
 
-                _unitOfWork.GetRepository<Category>().Delete(category);
+                await _unitOfWork.GetRepository<Category>().DeleteAsync(category.Id);
                 await _unitOfWork.SaveAsync();
 
                 _logger.LogInformation("Deleted category: {CategoryId}", id);

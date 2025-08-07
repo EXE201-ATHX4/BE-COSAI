@@ -1,9 +1,12 @@
 ﻿using Contract.Services.Interface;
 using Core.Base;
 using Core.Store;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ModelViews.UserModelViews;
+using Services.Service;
+using System.Security.Claims;
 
 namespace Web.Controllers
 {
@@ -30,6 +33,53 @@ namespace Web.Controllers
             {
                 return new BaseResponse<BasePaginatedList<UserModelResponse>>(StatusCodeHelper.ServerError, "500", $"Internal server error: {ex.Message}");
             }
+        }
+        [HttpPost]
+        [Authorize]
+        public async Task<ActionResult<BaseResponse<UserInfoModel>>> CreateUserInfo([FromBody] CreateUserInfo model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return BadRequest(new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
+                }
+                var result = await _accountService.CreateInfoModelAsync(model, userId.Value);
+                return result.IsSuccess ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+            }
+        }
+        [HttpPut]
+        [Authorize]
+        public async Task<ActionResult<BaseResponse<UserInfoModel>>> UpdateUserInfo([FromBody] UserInfoModel model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return BadRequest(new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
+                }
+                var result = await _accountService.UpdateUserInfotAsync(model, userId.Value);
+                return result.IsSuccess ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+            }
+        }
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                return userId;
+            }
+            return null;
         }
     }
 }
