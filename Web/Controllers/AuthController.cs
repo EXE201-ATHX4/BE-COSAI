@@ -128,13 +128,15 @@ namespace Web.Controllers
             // Xóa cookie CartId tạm (nếu muốn)
             //HttpContext.Response.Cookies.Delete("CartId");
             var token = await _tokenService.GenerateJwtTokenAsync(account);
-            var refreshToken = _tokenService.GenerateRefreshToken(account);
+            var refreshToken = await _tokenService.GenerateRefreshToken(account);
+            var role = await _userManager.GetRolesAsync(account);
             _logger.LogInformation("Login successful for user: {UserName}", account.UserName);
 
             return Ok(new
             {
                 AccessToken = token,
-                RefreshToken = refreshToken.Result
+                RefreshToken = refreshToken,
+                Role = role
             });
         }
 
