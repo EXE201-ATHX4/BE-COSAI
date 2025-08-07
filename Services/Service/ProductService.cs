@@ -5,19 +5,8 @@ using Contract.Services.Interface;
 using Core.Base;
 using Core.Store;
 using Core.Utils;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ModelViews.OrderDetailModel;
-using ModelViews.OrderModelViews;
 using ModelViews.ProductModelViews;
-using ModelViews.ShippingAddressModel;
-using ModelViews.ProductModelViews;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Services.Service
 {
@@ -59,6 +48,18 @@ namespace Services.Service
                     CreatedTime = CoreHelper.SystemTimeNow,
                     CreatedBy = user.UserName
                 };
+                if (model.ImageUrls?.Any() == true)
+                {
+                    foreach (var imageUrl in model.ImageUrls)
+                    {
+                        product.ProductImages.Add(new ProductImage
+                        {
+                            ImageUrl = imageUrl,
+                            CreatedTime = CoreHelper.SystemTimeNow,
+                            CreatedBy = user.UserName
+                        });
+                    }
+                }
                 await _unitOfWork.GetRepository<Product>().InsertAsync(product);
                 await _unitOfWork.SaveAsync();
                 var ProductDto = _mapper.Map<ProductModel>(product);
@@ -109,7 +110,7 @@ namespace Services.Service
                 if (pageSize < 1) pageSize = 10;
 
                 var ordersQuery = _unitOfWork.GetRepository<Product>()
-                    .Entities.Include(o => o.Brand).Include(o => o.Supplier).Include(o => o.Category).Where(c => !c.DeletedTime.HasValue)
+                    .Entities.Include(o => o.Brand).Include(o => o.Supplier).Include(p => p.ProductImages).Include(o => o.Category).Where(c => !c.DeletedTime.HasValue)
                     .AsQueryable();
                 // Áp dụng bộ lọc
                 if (productId.HasValue)
@@ -174,6 +175,11 @@ namespace Services.Service
                 if (model.SalePrice.HasValue)
                 {
                     product.SalePrice = model.SalePrice.Value;
+
+                }
+                if (model.Quantity.HasValue)
+                {
+                    product.Quantity = model.Quantity.Value;
 
                 }
                 if (model.IsOnSale.HasValue) 

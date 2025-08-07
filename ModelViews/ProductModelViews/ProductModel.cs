@@ -15,6 +15,7 @@ namespace ModelViews.ProductModelViews
         public string SKU { get; set; } = string.Empty;
         public decimal OriginalPrice { get; set; }
         public decimal? SalePrice { get; set; }
+        public int Quantity { get; set; }
         public int DiscountPercent
             => (SalePrice.HasValue && OriginalPrice > 0)
                 ? (int)Math.Round((OriginalPrice - SalePrice.Value) / OriginalPrice * 100)
@@ -29,6 +30,7 @@ namespace ModelViews.ProductModelViews
         public string BrandName { get; set; }
         public string CategoryName { get; set; }
         public string SupplierName { get; set; }
+        public List<string> ProductImages { get; set; } = new();
     }
     public class CreateProductModel
     {
@@ -36,7 +38,7 @@ namespace ModelViews.ProductModelViews
         public string SKU { get; set; } = string.Empty;
         public decimal OriginalPrice { get; set; }
         public decimal? SalePrice { get; set; }
-
+        public int Quantity { get; set; }
         // Trạng thái bán sản phẩm
         public bool IsOnSale { get; set; } = false;
         public string? Description { get; set; }
@@ -46,11 +48,13 @@ namespace ModelViews.ProductModelViews
         public int BrandId { get; set; }
         public int CategoryId { get; set; }
         public int SupplierId { get; set; }
+        public List<string>? ImageUrls { get; set; } = new List<string>();
     }
     public class UpdateProductModel 
     {
         public string? Name { get; set; } = string.Empty;
         public string? SKU { get; set; } = string.Empty;
+        public int? Quantity { get; set; }
         public decimal? OriginalPrice { get; set; }
         public decimal? SalePrice { get; set; }
 

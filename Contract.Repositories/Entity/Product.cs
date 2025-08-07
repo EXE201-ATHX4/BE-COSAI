@@ -43,6 +43,7 @@ namespace Contract.Repositories.Entity
         
         // Trạng thái bán sản phẩm
         public bool IsOnSale { get; set; } = false;
+        public int Quantity { get; set; }
 
         // Mô tả sản phẩm dài (HTML hoặc text thuần)
         [Column(TypeName = "nvarchar(max)")]
@@ -67,6 +68,7 @@ namespace Contract.Repositories.Entity
         public virtual Category? Category { get; set; }
 
         public virtual Supplier? Supplier { get; set; }
+        public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
 
     }

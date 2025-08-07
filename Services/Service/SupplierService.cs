@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Castle.Components.DictionaryAdapter.Xml;
 using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
@@ -8,11 +7,6 @@ using Core.Store;
 using Core.Utils;
 using Microsoft.EntityFrameworkCore;
 using ModelViews.SupplierModelViews;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Services.Service
 {

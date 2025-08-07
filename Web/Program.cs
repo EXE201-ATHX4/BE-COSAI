@@ -12,6 +12,7 @@ using Repositories.Base;
 using Services.Mappings;
 using Services.Service;
 using StackExchange.Redis;
+using System.Reflection;
 using System.Text;
 
 namespace Web
@@ -106,6 +107,9 @@ namespace Web
             });
             builder.Services.AddSwaggerGen(c =>
             {
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
                 //c.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API", Version = "v1" });
                 c.EnableAnnotations();
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -138,7 +142,11 @@ namespace Web
             if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                    c.RoutePrefix = string.Empty;
+                });
             }
             app.UseCors(policy =>
                 policy.AllowAnyOrigin()

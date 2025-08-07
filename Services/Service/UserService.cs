@@ -1,4 +1,5 @@
-﻿using Contract.Repositories.Entity;
+﻿using AutoMapper;
+using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
 using Core.Base;
@@ -14,9 +15,11 @@ namespace Services.Service
     public class UserService : IUserService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public UserService(IUnitOfWork unitOfWork)
+        private readonly IMapper _mapper;
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<User> GetUserByEmail(string email)
@@ -95,7 +98,9 @@ namespace Services.Service
                 var AccountModel = new UserModelResponse
                 {
                     Id = account.Id,
-                    
+                    Email = account.Email,
+                    Role = Role,
+                    UserInfo = _mapper.Map<UserInfoModel>(account.UserInfo)
                 };
                 result.Add(AccountModel);
             }

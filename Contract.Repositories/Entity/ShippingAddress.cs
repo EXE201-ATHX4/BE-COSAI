@@ -22,6 +22,6 @@ namespace Contract.Repositories.Entity
         public string? City { get; set; }
         public string? PostalCode { get; set; }
         public bool? IsDefault { get; set; }
-        public virtual Shipment? Shipment { get; set; }
+        public virtual ICollection<Shipment>? Shipment { get; set; }
     }
 }

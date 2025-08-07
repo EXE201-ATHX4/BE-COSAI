@@ -4,8 +4,6 @@ using Core.Base;
 using Core.Store;
 using Microsoft.AspNetCore.Mvc;
 using ModelViews.ProductModelViews;
-using ModelViews.SupplierModelViews;
-using Services.Service;
 using System.Security.Claims;
 
 namespace Web.Controllers
@@ -20,21 +18,21 @@ namespace Web.Controllers
             _productService = productService;
         }
         [HttpGet]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<SupplierModel>>>> GetProductAsync([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? productId = null, [FromQuery] int? supplierId = null, [FromQuery] int? brandId = null, [FromQuery] int? categoryId = null, [FromQuery] string? name = null)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProductModel>>>> GetProductAsync([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? productId = null, [FromQuery] int? supplierId = null, [FromQuery] int? brandId = null, [FromQuery] int? categoryId = null, [FromQuery] string? name = null)
         {
             try
             {
 
-                var suppliers = await _productService.GetAllProductAsync(pageNumber, pageSize, productId, supplierId, brandId, categoryId, name);
-                return suppliers.IsSuccess ? Ok(suppliers) : BadRequest(suppliers);
+                var products = await _productService.GetAllProductAsync(pageNumber, pageSize, productId, supplierId, brandId, categoryId, name);
+                return products.IsSuccess ? Ok(products) : BadRequest(products);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new BaseResponse<BasePaginatedList<SupplierModel>>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+                return StatusCode(500, new BaseResponse<BasePaginatedList<ProductModel>>(StatusCodeHelper.ServerError, "500", "Internal server error"));
             }
         }
         [HttpPost]
-        public async Task<ActionResult<BaseResponse<ProductModel>>> CreateSupplier([FromBody] CreateProductModel model)
+        public async Task<ActionResult<BaseResponse<ProductModel>>> Createproduct([FromBody] CreateProductModel model)
         {
             try
             {
@@ -52,21 +50,21 @@ namespace Web.Controllers
             }
         }
         [HttpPut]
-        public async Task<ActionResult<BaseResponse<ProductModel>>> UpdateSupplier(int productId, [FromBody] UpdateProductModel model)
+        public async Task<ActionResult<BaseResponse<ProductModel>>> Updateproduct(int productId, [FromBody] UpdateProductModel model)
         {
             try
             {
                 var userId = GetCurrentUserId();
                 if (userId == null)
                 {
-                    return BadRequest(new BaseResponse<SupplierModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
+                    return BadRequest(new BaseResponse<ProductModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
                 }
                 var result = await _productService.UpdateProductAsync(productId, model, userId.Value);
                 return result.IsSuccess ? Ok(result) : BadRequest(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new BaseResponse<SupplierModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+                return StatusCode(500, new BaseResponse<ProductModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
             }
         }
         [HttpDelete]

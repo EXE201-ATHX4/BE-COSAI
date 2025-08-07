@@ -16,6 +16,6 @@ namespace Contract.Repositories.Entity
         public int? EstimatedDays { get; set; }
         public decimal? Cost { get; set; }
         public string? Description { get; set; }
-        public virtual Shipment? Shipment { get; set; }
+        public virtual ICollection<Shipment>? Shipment { get; set; }
     }
 }

@@ -59,7 +59,8 @@ namespace Web
                 .AddScoped<IUserService, UserService>()
                 .AddTransient<IEmailSender, EmailSender>()
                 .AddScoped<TokenService>()
-                .AddScoped<ICategoryService, CategoryService>();
+                .AddScoped<ICategoryService, CategoryService>()
+                .AddScoped<IBrandService, BrandService>();
         }
         public static void ConfigureServices(this IServiceCollection services)
         {

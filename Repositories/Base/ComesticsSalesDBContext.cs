@@ -28,6 +28,7 @@ namespace Repositories.Base
         public DbSet<UserInfo> UserInfo { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -52,6 +53,7 @@ namespace Repositories.Base
             modelBuilder.Entity<Conversation>().Property(b => b.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Message>().Property(b => b.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Brand>().Property(b => b.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<ProductImage>().Property(b => b.Id).ValueGeneratedOnAdd();
         }
     }
 }
