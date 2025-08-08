@@ -155,6 +155,10 @@ namespace Services.Service
             {
                 var ordersQuery = await _unitOfWork.GetRepository<Product>()
                     .Entities.Include(o => o.Brand).Include(o => o.Supplier).Include(p => p.ProductImages).Include(o => o.Category).Where(c => !c.DeletedTime.HasValue).FirstOrDefaultAsync(c => c.Id == productId);
+                if (ordersQuery == null)
+                {
+                    return new BaseResponse<ProductModel>(StatusCodeHelper.Notfound, "400", "Product not found");
+                }
                 var ProductDtos = _mapper.Map<ProductModel>(ordersQuery);
                 return new BaseResponse<ProductModel>(StatusCodeHelper.OK, "200", ProductDtos);
             }
