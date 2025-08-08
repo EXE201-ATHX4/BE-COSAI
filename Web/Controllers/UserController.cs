@@ -20,6 +20,9 @@ namespace Web.Controllers
         {
             _accountService = accountService;
         }
+        /// <summary>
+        /// lấy all user
+        /// </summary>
         [HttpGet]
         public async Task<BaseResponse<BasePaginatedList<UserModelResponse>>> GetAllAccounts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
@@ -34,7 +37,24 @@ namespace Web.Controllers
                 return new BaseResponse<BasePaginatedList<UserModelResponse>>(StatusCodeHelper.ServerError, "500", $"Internal server error: {ex.Message}");
             }
         }
-        [HttpPost]
+        /// <summary>
+        /// lấy user profile
+        /// </summary>
+        [HttpGet("info")]
+        public async Task<BaseResponse<UserModelResponse>> GetUserById()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var accounts = await _accountService.GetUserById(userId.Value);
+                return  accounts;
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<UserModelResponse>(StatusCodeHelper.ServerError, "500", $"Internal server error: {ex.Message}");
+            }
+        }
+        [HttpPost("info")]
         [Authorize]
         public async Task<ActionResult<BaseResponse<UserInfoModel>>> CreateUserInfo([FromBody] CreateUserInfo model)
         {
@@ -53,7 +73,7 @@ namespace Web.Controllers
                 return StatusCode(500, new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
             }
         }
-        [HttpPut]
+        [HttpPut("info")]
         [Authorize]
         public async Task<ActionResult<BaseResponse<UserInfoModel>>> UpdateUserInfo([FromBody] UserInfoModel model)
         {

@@ -27,6 +27,9 @@ namespace Services.Mappings
             CreateMap<UserInfo, UserInfoModel>().ReverseMap();
             CreateMap<UserInfo, CreateUserInfo>().ReverseMap();
             CreateMap<Brand, BrandModel>().ReverseMap();
+            CreateMap<UserModelResponse, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ReverseMap();
         }
     }
 }

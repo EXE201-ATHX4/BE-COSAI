@@ -17,6 +17,9 @@ namespace Web.Controllers
         {
             _productService = productService;
         }
+        /// <summary>
+        /// lấy all product
+        /// </summary>
         [HttpGet]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProductModel>>>> GetProductAsync([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? productId = null, [FromQuery] int? supplierId = null, [FromQuery] int? brandId = null, [FromQuery] int? categoryId = null, [FromQuery] string? name = null)
         {
@@ -29,6 +32,23 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new BaseResponse<BasePaginatedList<ProductModel>>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+            }
+        }
+        /// <summary>
+        /// Get product by Id
+        /// </summary>
+        [HttpGet("{productId}")]
+        public async Task<ActionResult<BaseResponse<ProductModel>>> GetProductByIdAsync([FromRoute] int productId)
+        {
+            try
+            {
+
+                var products = await _productService.GetProductByIdAsync(productId);
+                return products.IsSuccess ? Ok(products) : BadRequest(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BaseResponse<ProductModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
             }
         }
         [HttpPost]

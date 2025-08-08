@@ -149,6 +149,21 @@ namespace Services.Service
             }
         }
 
+        public async Task<BaseResponse<ProductModel>> GetProductByIdAsync(int productId)
+        {
+            try
+            {
+                var ordersQuery = await _unitOfWork.GetRepository<Product>()
+                    .Entities.Include(o => o.Brand).Include(o => o.Supplier).Include(p => p.ProductImages).Include(o => o.Category).Where(c => !c.DeletedTime.HasValue).FirstOrDefaultAsync(c => c.Id == productId);
+                var ProductDtos = _mapper.Map<ProductModel>(ordersQuery);
+                return new BaseResponse<ProductModel>(StatusCodeHelper.OK, "200", ProductDtos);
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<ProductModel>(StatusCodeHelper.Notfound, "400", "An error occured while retrieving the product");
+            }
+        }
+
         public async Task<BaseResponse<ProductModel>> UpdateProductAsync(int productId, UpdateProductModel model, int userId)
         {
             try

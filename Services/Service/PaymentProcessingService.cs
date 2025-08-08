@@ -73,6 +73,7 @@ namespace Services.Service
                                 var product = await db.Products.FindAsync(item.Id);
                                 if (product == null || product.Quantity < item.Quantity)
                                 {
+                                    _memoryCache.Remove(key);
                                     throw new Exception($"Sản phẩm với ID {item.Id} không đủ số lượng hoặc không tồn tại.");
                                 }
 
