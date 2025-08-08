@@ -84,7 +84,10 @@ namespace Web.Controllers
 
             var result = await _userManager.ConfirmEmailAsync(user, code);
             if (result.Succeeded)
-                return Content("Email confirmed successfully! You may now log in.");
+            {
+                // Redirect to your frontend login page after successful confirmation
+                return Redirect("https://cosai.netlify.app/login");
+            }
             else
                 return BadRequest("Email confirmation failed.");
         }
@@ -120,18 +123,20 @@ namespace Web.Controllers
             var anonymousId = CartHelper.GetCartId(HttpContext);
 
             // Gộp giỏ hàng
-            await _cartService.MergeCartsOnLoginAsync(anonymousId!, account.Id.ToString());
+            //await _cartService.MergeCartsOnLoginAsync(anonymousId!, account.Id.ToString());
 
             // Xóa cookie CartId tạm (nếu muốn)
-            HttpContext.Response.Cookies.Delete("CartId");
+            //HttpContext.Response.Cookies.Delete("CartId");
             var token = await _tokenService.GenerateJwtTokenAsync(account);
-            var refreshToken = _tokenService.GenerateRefreshToken(account);
+            var refreshToken = await _tokenService.GenerateRefreshToken(account);
+            var role = await _userManager.GetRolesAsync(account);
             _logger.LogInformation("Login successful for user: {UserName}", account.UserName);
 
             return Ok(new
             {
                 AccessToken = token,
-                RefreshToken = refreshToken.Result
+                RefreshToken = refreshToken,
+                Role = role
             });
         }
 
@@ -168,10 +173,11 @@ namespace Web.Controllers
                 // Tạo JWT token để gửi về frontend
 
                 var token = await _tokenService.GenerateJwtTokenAsync(user);
-                var refreshToken = _tokenService.GenerateRefreshToken(user);
+                var refreshToken = await _tokenService.GenerateRefreshToken(user);
                 var role = await _userManager.GetRolesAsync(user);
 
                 return Ok(new { Message = "Login successful", AccessToken = token, RefreshToken = refreshToken, Email = email, UserId = user.Id, Role = role });
+
             }
             catch
             {

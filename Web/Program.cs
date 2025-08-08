@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repositories.Base;
+using Services.Mappings;
+using Services.Service;
 using StackExchange.Redis;
+using System.Reflection;
 using System.Text;
-using System.Text.Json.Serialization;
 
 namespace Web
 {
@@ -19,12 +21,17 @@ namespace Web
     {
         public static void Main(string[] args)
         {
+            DotNetEnv.Env.Load();
+            //var base64 = Environment.GetEnvironmentVariable("FIREBASE_KEY_JSON");
+
+
+            var builder = WebApplication.CreateBuilder(args);
+            var firebase = builder.Configuration["FIREBASE_KEY_JSON"];
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(firebase));
             FirebaseApp.Create(new AppOptions()
             {
-                Credential = GoogleCredential.FromFile("Config/serviceAccountKey.json")
+                Credential = GoogleCredential.FromJson(json)
             });
-            var builder = WebApplication.CreateBuilder(args);
-
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -38,6 +45,13 @@ namespace Web
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<ComesticsSalesDBContext>()
                 .AddDefaultTokenProviders();
+            // Configure AutoMapper
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllOrigins",
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -47,7 +61,7 @@ namespace Web
 
             }).AddJwtBearer(options =>
                 {
-                
+
                     options.RequireHttpsMetadata = false;
                     options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -60,17 +74,20 @@ namespace Web
                         ValidAudience = builder.Configuration["Jwt:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                     };
-                    options.Events = new JwtBearerEvents{
-                        OnChallenge = context =>{
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = context =>
+                        {
                             context.HandleResponse();
                             context.Response.StatusCode = 401;
                             context.Response.ContentType = "application/json";
-                            return context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(new {
+                            return context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                            {
                                 error = "Unauthorized",
                                 error_description = "You need to provide a valid token to access this resource."
                             }));
                         }
-                    };                       
+                    };
                 });
             builder.Services.AddSingleton<IConnectionMultiplexer>(opts =>
             {
@@ -90,8 +107,11 @@ namespace Web
             });
             builder.Services.AddSwaggerGen(c =>
             {
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
                 //c.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API", Version = "v1" });
-
+                c.EnableAnnotations();
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
@@ -122,9 +142,16 @@ namespace Web
             if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                    c.RoutePrefix = string.Empty;
+                });
             }
-
+            app.UseCors(policy =>
+                policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();

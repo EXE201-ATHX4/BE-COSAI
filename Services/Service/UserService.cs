@@ -1,4 +1,5 @@
-﻿using Contract.Repositories.Entity;
+﻿using AutoMapper;
+using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
 using Core.Base;
@@ -7,6 +8,8 @@ using Core.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ModelViews.AuthModelViews;
+using ModelViews.ProductModelViews;
+using ModelViews.SupplierModelViews;
 using ModelViews.UserModelViews;
 
 namespace Services.Service
@@ -14,9 +17,13 @@ namespace Services.Service
     public class UserService : IUserService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public UserService(IUnitOfWork unitOfWork)
+        private readonly IMapper _mapper;
+        private readonly UserManager<User> _userManager;
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<User> userManager)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _userManager = userManager;
         }
 
         public async Task<User> GetUserByEmail(string email)
@@ -95,7 +102,9 @@ namespace Services.Service
                 var AccountModel = new UserModelResponse
                 {
                     Id = account.Id,
-                    
+                    Email = account.Email,
+                    Role = Role,
+                    UserInfo = _mapper.Map<UserInfoModel>(account.UserInfo)
                 };
                 result.Add(AccountModel);
             }
@@ -113,53 +122,53 @@ namespace Services.Service
                 return new BaseResponse<string>(StatusCodeHelper.Notfound, "400", "Account not found.");
             }
 
-    //        if (!string.IsNullOrEmpty(model.Role))
-    //        {
-    //            var role = await _unitOfWork.GetRepository<ApplicationRole>()
-    //                .Entities.FirstOrDefaultAsync(n => n.Name.Equals(model.Role));
+            //        if (!string.IsNullOrEmpty(model.Role))
+            //        {
+            //            var role = await _unitOfWork.GetRepository<ApplicationRole>()
+            //                .Entities.FirstOrDefaultAsync(n => n.Name.Equals(model.Role));
 
-    //            if (role == null)
-    //            {
-    //                return new BaseResponse<string>(StatusCodeHelper.Notfound, "400", "Role does not exist.");
-    //            }
+            //            if (role == null)
+            //            {
+            //                return new BaseResponse<string>(StatusCodeHelper.Notfound, "400", "Role does not exist.");
+            //            }
 
-    //            // Lấy role hiện tại của user (đang active)
-    //            var currentUserRole = await _unitOfWork.GetRepository<ApplicationUserRoles>()
-    //.Entities.FirstOrDefaultAsync(ur => ur.UserId == account.Id && !ur.DeletedTime.HasValue);
+            //            // Lấy role hiện tại của user (đang active)
+            //            var currentUserRole = await _unitOfWork.GetRepository<ApplicationUserRoles>()
+            //.Entities.FirstOrDefaultAsync(ur => ur.UserId == account.Id && !ur.DeletedTime.HasValue);
 
-    //            // Lấy role đã bị xóa (soft delete)
-    //            var deletedUserRole = await _unitOfWork.GetRepository<ApplicationUserRoles>()
-    //.Entities.FirstOrDefaultAsync(ur => ur.UserId == account.Id && ur.DeletedTime.HasValue && ur.RoleId == role.Id);
+            //            // Lấy role đã bị xóa (soft delete)
+            //            var deletedUserRole = await _unitOfWork.GetRepository<ApplicationUserRoles>()
+            //.Entities.FirstOrDefaultAsync(ur => ur.UserId == account.Id && ur.DeletedTime.HasValue && ur.RoleId == role.Id);
 
-    //            if (deletedUserRole != null)
-    //            {
-    //                // Nếu cập nhật về role cũ đã bị xóa, khôi phục lại
-    //                deletedUserRole.DeletedTime = null;
-    //                deletedUserRole.DeletedBy = null;
+            //            if (deletedUserRole != null)
+            //            {
+            //                // Nếu cập nhật về role cũ đã bị xóa, khôi phục lại
+            //                deletedUserRole.DeletedTime = null;
+            //                deletedUserRole.DeletedBy = null;
 
-    //                if (currentUserRole != null)
-    //                {
-    //                    // Xóa role hiện tại (soft delete)
-    //                    currentUserRole.DeletedTime = DateTimeOffset.UtcNow;
-    //                    currentUserRole.DeletedBy = "System";
-    //                }
-    //            }
-    //            else if (currentUserRole != null && currentUserRole.RoleId != role.Id)
-    //            {
-    //                // Nếu cập nhật về role mới, xóa role hiện tại và thêm role mới
-    //                currentUserRole.DeletedTime = DateTimeOffset.UtcNow;
-    //                currentUserRole.DeletedBy = "System";
+            //                if (currentUserRole != null)
+            //                {
+            //                    // Xóa role hiện tại (soft delete)
+            //                    currentUserRole.DeletedTime = DateTimeOffset.UtcNow;
+            //                    currentUserRole.DeletedBy = "System";
+            //                }
+            //            }
+            //            else if (currentUserRole != null && currentUserRole.RoleId != role.Id)
+            //            {
+            //                // Nếu cập nhật về role mới, xóa role hiện tại và thêm role mới
+            //                currentUserRole.DeletedTime = DateTimeOffset.UtcNow;
+            //                currentUserRole.DeletedBy = "System";
 
-    //                var newUserRole = new ApplicationUserRoles
-    //                {
-    //                    UserId = account.Id,
-    //                    RoleId = role.Id,
-    //                    CreatedBy = "System",
-    //                    CreatedTime = DateTimeOffset.UtcNow
-    //                };
-    //                await _unitOfWork.GetRepository<ApplicationUserRoles>().InsertAsync(newUserRole);
-    //            }
-    //        }
+            //                var newUserRole = new ApplicationUserRoles
+            //                {
+            //                    UserId = account.Id,
+            //                    RoleId = role.Id,
+            //                    CreatedBy = "System",
+            //                    CreatedTime = DateTimeOffset.UtcNow
+            //                };
+            //                await _unitOfWork.GetRepository<ApplicationUserRoles>().InsertAsync(newUserRole);
+            //            }
+            //        }
 
 
             if (!string.IsNullOrEmpty(model.PhoneNumber))
@@ -245,7 +254,7 @@ namespace Services.Service
                 DateOfBirth = model.DateOfBirth,
             };
 
-            account.UserInfo= patientInfo;
+            account.UserInfo = patientInfo;
 
             try
             {
@@ -288,9 +297,9 @@ namespace Services.Service
                  ).FirstOrDefaultAsync(); // get Role for user
             var AccountModel = new UserModelResponse
             {
-                Id = account.Id,               
+                Id = account.Id,
                 Email = account.Email,
-                
+
             };
             return AccountModel;
         }
@@ -317,6 +326,78 @@ namespace Services.Service
         public Task<bool> AddClaimToRoleAsync(int roleId, string claimType, string claimValue, string createdBy)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<BaseResponse<UserInfoModel>> CreateInfoModelAsync(CreateUserInfo model, int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.GetRepository<User>().Entities.FirstOrDefaultAsync(c => c.Id == userId && !c.DeletedTime.HasValue);
+                if (user == null)
+                {
+                    return new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "User not found");
+                }
+                var userInfo = _mapper.Map<UserInfo>(model);
+                userInfo.User = user;
+                await _unitOfWork.GetRepository<UserInfo>().InsertAsync(userInfo);
+                await _unitOfWork.SaveAsync();
+                var userInfoDto = _mapper.Map<UserInfoModel>(userInfo);
+
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.OK, "200", "Create successfully");
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.BadRequest, "400", "An error occurred while creating the Product");
+            }
+        }
+
+        public async Task<BaseResponse<UserInfoModel>> UpdateUserInfotAsync(UserInfoModel model, int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.GetRepository<User>()
+                    .Entities
+                    .Include(u => u.UserInfo) // đảm bảo include UserInfo
+                    .FirstOrDefaultAsync(c => c.Id == userId && !c.DeletedTime.HasValue);
+
+                if (user == null || user.UserInfo == null)
+                {
+                    return new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "404", "User not found");
+                }
+
+                // Cập nhật thông tin từ model
+                user.UserInfo.FullName = model.FullName ?? user.UserInfo.FullName;
+                user.UserInfo.Bio = model.Bio ?? user.UserInfo.Bio;
+                user.UserInfo.Gender = model.Gender ?? user.UserInfo.Gender;
+                user.UserInfo.Address = model.Address ?? user.UserInfo.Address;
+                user.UserInfo.DateOfBirth = model.DateOfBirth ?? user.UserInfo.DateOfBirth;
+                user.UserInfo.PhoneNumber = model.PhoneNumber ?? user.UserInfo.PhoneNumber;
+                user.UserInfo.LastUpdatedBy = user.UserName;
+                user.UserInfo.LastUpdatedTime = CoreHelper.SystemTimeNow;
+                await _unitOfWork.GetRepository<UserInfo>().UpdateAsync(user.UserInfo);
+                await _unitOfWork.SaveAsync();
+
+                var userInfoDto = _mapper.Map<UserInfoModel>(user.UserInfo);
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.OK, "200", userInfoDto, "User info updated successfully");
+            }
+            catch (Exception ex)
+            {
+                // Log exception nếu cần
+                return new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "An error occurred while updating user info");
+            }
+        }
+
+        public async Task<BaseResponse<UserModelResponse>> GetUserById(int userId)
+        {
+            var user = await _unitOfWork.GetRepository<User>().Entities.Include(c => c.UserInfo).FirstOrDefaultAsync(c => c.Id == userId);
+            if (user == null) 
+            {
+                return new BaseResponse<UserModelResponse>(StatusCodeHelper.Notfound, "404", "brand not found");
+            }
+            var result = _mapper.Map<UserModelResponse>(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            result.Role = roles.FirstOrDefault();
+            return new BaseResponse<UserModelResponse>(StatusCodeHelper.OK, "200", result);
         }
     }
 }

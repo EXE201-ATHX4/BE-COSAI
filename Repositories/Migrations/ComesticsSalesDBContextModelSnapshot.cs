@@ -272,7 +272,7 @@ namespace Repositories.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Contract.Repositories.Entity.Category", b =>
+            modelBuilder.Entity("Contract.Repositories.Entity.Brand", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -292,9 +292,6 @@ namespace Repositories.Migrations
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LastUpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -302,11 +299,126 @@ namespace Repositories.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
+                    b.ToTable("Brands");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowProducts")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ShowInMenu")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
@@ -421,6 +533,9 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BrandId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
@@ -439,6 +554,12 @@ namespace Repositories.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Ingredients")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsOnSale")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastUpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -446,18 +567,82 @@ namespace Repositories.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("OriginalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("SalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ShortDescription")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SupplierId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Usage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("BrandId");
 
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("SupplierId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("Contract.Repositories.Entity.Review", b =>
@@ -502,9 +687,7 @@ namespace Repositories.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("ProductId")
-                        .IsUnique()
-                        .HasFilter("[ProductId] IS NOT NULL");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Reviews");
                 });
@@ -562,13 +745,9 @@ namespace Repositories.Migrations
                         .IsUnique()
                         .HasFilter("[OrderId] IS NOT NULL");
 
-                    b.HasIndex("ShippingAddressId")
-                        .IsUnique()
-                        .HasFilter("[ShippingAddressId] IS NOT NULL");
+                    b.HasIndex("ShippingAddressId");
 
-                    b.HasIndex("ShippingMethodId")
-                        .IsUnique()
-                        .HasFilter("[ShippingMethodId] IS NOT NULL");
+                    b.HasIndex("ShippingMethodId");
 
                     b.ToTable("Shipments");
                 });
@@ -928,6 +1107,33 @@ namespace Repositories.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Contract.Repositories.Entity.Category", b =>
+                {
+                    b.HasOne("Contract.Repositories.Entity.Category", null)
+                        .WithMany("SubCategory")
+                        .HasForeignKey("CategoryId");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
+                {
+                    b.HasOne("Contract.Repositories.Entity.User", "User")
+                        .WithMany("Conversations")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Message", b =>
+                {
+                    b.HasOne("Contract.Repositories.Entity.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+                });
+
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
                 {
                     b.HasOne("Contract.Repositories.Entity.User", "User")
@@ -944,7 +1150,7 @@ namespace Repositories.Migrations
                         .HasForeignKey("OrderId");
 
                     b.HasOne("Contract.Repositories.Entity.Product", "Product")
-                        .WithMany("OrderDetails")
+                        .WithMany()
                         .HasForeignKey("ProductId");
 
                     b.Navigation("Order");
@@ -954,6 +1160,10 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Contract.Repositories.Entity.Product", b =>
                 {
+                    b.HasOne("Contract.Repositories.Entity.Brand", "Brand")
+                        .WithMany()
+                        .HasForeignKey("BrandId");
+
                     b.HasOne("Contract.Repositories.Entity.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId");
@@ -962,9 +1172,22 @@ namespace Repositories.Migrations
                         .WithMany("Products")
                         .HasForeignKey("SupplierId");
 
+                    b.Navigation("Brand");
+
                     b.Navigation("Category");
 
                     b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.ProductImage", b =>
+                {
+                    b.HasOne("Contract.Repositories.Entity.Product", "Product")
+                        .WithMany("ProductImages")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Contract.Repositories.Entity.Review", b =>
@@ -974,8 +1197,8 @@ namespace Repositories.Migrations
                         .HasForeignKey("CustomerId");
 
                     b.HasOne("Contract.Repositories.Entity.Product", "Products")
-                        .WithOne("Review")
-                        .HasForeignKey("Contract.Repositories.Entity.Review", "ProductId");
+                        .WithMany()
+                        .HasForeignKey("ProductId");
 
                     b.Navigation("Customer");
 
@@ -989,12 +1212,12 @@ namespace Repositories.Migrations
                         .HasForeignKey("Contract.Repositories.Entity.Shipment", "OrderId");
 
                     b.HasOne("Contract.Repositories.Entity.ShippingAddress", "ShippingAddress")
-                        .WithOne("Shipment")
-                        .HasForeignKey("Contract.Repositories.Entity.Shipment", "ShippingAddressId");
+                        .WithMany("Shipment")
+                        .HasForeignKey("ShippingAddressId");
 
                     b.HasOne("Contract.Repositories.Entity.ShippingMethod", "ShippingMethod")
-                        .WithOne("Shipment")
-                        .HasForeignKey("Contract.Repositories.Entity.Shipment", "ShippingMethodId");
+                        .WithMany("Shipment")
+                        .HasForeignKey("ShippingMethodId");
 
                     b.Navigation("Order");
 
@@ -1024,6 +1247,13 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Contract.Repositories.Entity.Category", b =>
                 {
                     b.Navigation("Products");
+
+                    b.Navigation("SubCategory");
+                });
+
+            modelBuilder.Entity("Contract.Repositories.Entity.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Contract.Repositories.Entity.Order", b =>
@@ -1035,9 +1265,7 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Contract.Repositories.Entity.Product", b =>
                 {
-                    b.Navigation("OrderDetails");
-
-                    b.Navigation("Review");
+                    b.Navigation("ProductImages");
                 });
 
             modelBuilder.Entity("Contract.Repositories.Entity.Shipment", b =>
@@ -1062,6 +1290,8 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Contract.Repositories.Entity.User", b =>
                 {
+                    b.Navigation("Conversations");
+
                     b.Navigation("Orders");
 
                     b.Navigation("Reviews");

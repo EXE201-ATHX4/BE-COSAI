@@ -1,4 +1,5 @@
 ﻿using Contract.Repositories.Entity;
+using Core.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using ModelViews.OrderModelViews;
 using Net.payOS;
 using Repositories.Base;
+using System.Runtime.ConstrainedExecution;
 
 namespace Services.Service
 {
@@ -65,19 +67,39 @@ namespace Services.Service
                                 CreatedTime = DateTime.UtcNow
                             };
                             // Save order
-                            var order = new Order {
+                            var orderDetails = new List<OrderDetail>();
+                            foreach (var item in session.Items)
+                            {
+                                var product = await db.Products.FindAsync(item.Id);
+                                if (product == null || product.Quantity < item.Quantity)
+                                {
+                                    _memoryCache.Remove(key);
+                                    throw new Exception($"Sản phẩm với ID {item.Id} không đủ số lượng hoặc không tồn tại.");
+                                }
+
+                                // Trừ số lượng
+                                product.Quantity -= item.Quantity;
+
+                                // Tạo chi tiết đơn hàng
+                                orderDetails.Add(new OrderDetail
+                                {
+                                    ProductId = item.Id,
+                                    Quantity = item.Quantity,
+                                    Price = (int)item.Price
+                                });
+                            }
+
+                            // Sau đó gán vào Order
+                            var order = new Order
+                            {
+                                OrderDate = CoreHelper.SystemTimeNow.DateTime,
                                 CreatedTime = DateTime.UtcNow,
                                 TotalPrice = info.amount,
                                 Status = info.status,
-                                OrderDetails = session.Items.Select(i => new OrderDetail
-                                {
-                                    ProductId = i.Id,
-                                    Quantity = i.Quantity,
-                                    Price = (int)i.Price
-                                }).ToList(),
+                                OrderDetails = orderDetails,
                                 Shipment = shipment,
-
                             };
+
                             db.Orders.Add(order);
                             await db.SaveChangesAsync(token);
 

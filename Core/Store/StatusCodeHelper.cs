@@ -17,6 +17,9 @@ namespace Core.Store
         ServerError = 500,
 
         [CustomName("Not found")]
-        Notfound = 400
+        Notfound = 400,
+
+        [CustomName("Created")]
+        Created = 201
     }
 }

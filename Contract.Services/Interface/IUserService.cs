@@ -1,6 +1,7 @@
 ﻿using Contract.Repositories.Entity;
 using Core.Base;
 using ModelViews.AuthModelViews;
+using ModelViews.ProductModelViews;
 using ModelViews.UserModelViews;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,9 @@ namespace Contract.Services.Interface
         Task<bool> UpdateClaimAsync(int claimId, string claimType, string claimValue, string updatedBy);
         Task<bool> SoftDeleteClaimAsync(int claimId, string deletedBy);
         Task<BasePaginatedList<UserModelResponse>> GetAllAccounts(int pageNumber, int pageSize);
+        Task<BaseResponse<UserModelResponse>> GetUserById(int userId);
         Task<User> AuthenticateAsync(LoginModelView model);
+        Task<BaseResponse<UserInfoModel>> CreateInfoModelAsync(CreateUserInfo model, int userId);
+        Task<BaseResponse<UserInfoModel>> UpdateUserInfotAsync(UserInfoModel model, int userId);
     }
 }

@@ -9,6 +9,7 @@ namespace Core.Base
         public string? Message { get; set; }
         public StatusCodeHelper StatusCode { get; set; }
         public string? Code { get; set; }
+        public bool IsSuccess => int.Parse(Code) >= 200 && int.Parse(Code) < 300;
         public BaseResponse(StatusCodeHelper statusCode, string code, T? data, string? message)
         {
             Data = data;

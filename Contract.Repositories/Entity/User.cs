@@ -23,5 +23,6 @@ namespace Contract.Repositories.Entity
         public virtual UserInfo? UserInfo { get; set; }
         public virtual ICollection<Review>? Reviews { get; set; } = new List<Review>();
         public virtual ICollection<Order>? Orders { get; set; } = new List<Order>();
+        public virtual ICollection<Conversation>? Conversations { get; set; } = new List<Conversation>();
     }
 }

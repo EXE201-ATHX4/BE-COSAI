@@ -11,6 +11,6 @@ namespace ModelViews.UserModelViews
         public int Id { get; set; }
         public string? Email { get; set; }
         public string? Role { get; set; }
-        UserInfoModel? UserInfo { get; set; }   
+        public UserInfoModel? UserInfo { get; set; }   
     }
 }

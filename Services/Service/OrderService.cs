@@ -3,12 +3,15 @@ using Contract.Repositories.Entity;
 using Contract.Repositories.Interface;
 using Contract.Services.Interface;
 using Core.Base;
+using Core.Store;
 using Microsoft.EntityFrameworkCore;
-using Net.payOS;
 using Microsoft.Extensions.Logging;
-using ModelViews.OrderModelViews;
 using ModelViews.OrderDetailModel;
+using ModelViews.OrderModelViews;
 using ModelViews.ShippingAddressModel;
+using Net.payOS;
+using System.Globalization;
+using static ModelViews.AIModelViews.GeminiModels;
 namespace Services.Service
 {
     public class OrderService : IOrderService
@@ -158,10 +161,10 @@ namespace Services.Service
                             District = o.Shipment.ShippingAddress.District,
                             City = o.Shipment.ShippingAddress.City,
                         },
-                        ShipmentMethod = o.Shipment.ShippingMethod.Name 
+                        ShipmentMethod = o.Shipment.ShippingMethod.Name
                     })
                     .ToListAsync();
-                var orders =  orderResponses
+                var orders = orderResponses
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize).ToList();
 
@@ -172,6 +175,85 @@ namespace Services.Service
                 _logger.LogError(ex, "Failed to fetch Order: {Message}", ex.Message);
                 throw;
             }
+        }
+        public async Task<List<RevenueByTimeDto>> GetMonthlyRevenueAsync()
+        {
+            var result = await _unitOfWork.GetRepository<Order>().Entities
+                .Where(o => o.Status == "PAID")
+                .GroupBy(o => new { o.CreatedTime.Year, o.CreatedTime.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Total = g.Sum(x => x.TotalPrice)
+                })
+                .ToListAsync();
+
+            return result
+                .Select(x => new RevenueByTimeDto
+                {
+                    // Set Period là ngày đầu tháng (mặc định là 1st, 00:00)
+                    Period = new DateTimeOffset(x.Year, x.Month, 1, 0, 0, 0, TimeSpan.Zero),
+                    TotalRevenue = (int)x.Total
+                })
+                .OrderBy(x => x.Period)
+                .ToList();
+        }
+
+
+
+        public async Task<List<RevenueByTimeDto>> GetWeeklyRevenueAsync()
+        {
+            // Xác định ngày bắt đầu (Thứ Hai) và kết thúc (Chủ Nhật) của tuần hiện tại
+            DateTime today = DateTime.UtcNow.Date;
+            int diff = (7 + (int)today.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+            DateTime weekStart = today.AddDays(-diff);
+            DateTime weekEnd = weekStart.AddDays(7);
+
+            // Lấy các đơn hàng "PAID" trong khoảng tuần hiện tại
+            var totalRevenue = await _unitOfWork.GetRepository<Order>().Entities
+                .Where(o => o.Status == "PAID" &&
+                            o.CreatedTime >= weekStart &&
+                            o.CreatedTime < weekEnd)
+                .SumAsync(o => o.TotalPrice);
+
+            return new List<RevenueByTimeDto>
+    {
+        new RevenueByTimeDto
+        {
+            Period = new DateTimeOffset(weekStart, TimeSpan.Zero),
+            TotalRevenue = (int)totalRevenue
+        }
+    };
+        }
+
+
+
+
+
+        public async Task<List<LowStockProductDto>> GetLowStockProductsAsync(int threshold = 10)
+        {
+            return await _unitOfWork.GetRepository<Product>().Entities
+                .Where(p => p.Quantity < threshold)
+                .Select(p => new LowStockProductDto
+                {
+                    ProductId = p.Id,
+                    Name = p.Name,
+                    ProductImage = p.ProductImages.FirstOrDefault().ImageUrl,
+                    Quantity = p.Quantity
+                })
+                .ToListAsync();
+        }
+
+        public async Task<BaseResponse<StatisticsSummaryModelView>> GetStatisticsSummaryAsync()
+        {
+            var result = new StatisticsSummaryModelView
+            {
+                MonthlyRevenue = await GetMonthlyRevenueAsync(),
+                WeeklyRevenue = await GetWeeklyRevenueAsync(),
+                LowStockProducts = await GetLowStockProductsAsync()
+            };
+            return new BaseResponse<StatisticsSummaryModelView>(StatusCodeHelper.OK, "200", result);
         }
     }
 }

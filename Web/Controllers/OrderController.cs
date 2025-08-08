@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Net.payOS.Types;
-using Net.payOS;
+﻿using Contract.Repositories.Entity;
+using Contract.Services.Interface;
 using Core.Base;
-using ModelViews.PaymentModelViews;
+using Core.Store;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using ModelViews.OrderModelViews;
-using Contract.Services.Interface;
-using Contract.Repositories.Entity;
+using ModelViews.PaymentModelViews;
+using ModelViews.UserModelViews;
+using Net.payOS;
+using Net.payOS.Types;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Web.Controllers
 {
@@ -24,7 +27,17 @@ namespace Web.Controllers
             _memoryCache = memoryCache;
             _orderService = orderService;
         }
-
+        /// <summary>
+        /// Tạo link thanh toán từ thông tin đơn hàng.
+        /// </summary>
+        /// <remarks>
+        /// Phương thức giao hàng:
+        /// - Giao hàng tiêu chuẩn
+        /// - Giao hàng nhanh
+        /// - Giao hàng hoả tốc
+        /// </remarks>
+        /// <param name="body">Dữ liệu yêu cầu tạo link thanh toán</param>
+        /// <returns>Link thanh toán</returns>
         [HttpPost("create")]
         public async Task<IActionResult> CreatePaymentLink(CreatePaymentLinkRequest body)
         {
@@ -55,7 +68,7 @@ namespace Web.Controllers
             }
         }
         [HttpGet]
-        public async Task<ActionResult<BasePaginatedList<Order>>> GetAllOrders(
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderResponse>>>> GetAllOrders(
     [FromQuery] int pageNumber = 1,
     [FromQuery] int pageSize = 10,
     [FromQuery] string email = null,
@@ -116,7 +129,7 @@ namespace Web.Controllers
                 }
 
                 var orders = await _orderService.GetAllOrders(pageNumber, pageSize, email, sortBy, sortOrder, orderStartDate, orderEndDate, updatedStartDate, updatedEndDate, userId, createdBy, updatedBy, deletedBy, isActive);
-                return Ok(BaseResponse<BasePaginatedList<OrderResponse>>.OkResponse(orders));
+                return new BaseResponse<BasePaginatedList<OrderResponse>>(StatusCodeHelper.OK, "200", orders);
             }
             catch (Exception ex)
             {
@@ -170,6 +183,21 @@ namespace Web.Controllers
                 return Ok(new Response(-1, "fail", null));
             }
 
+        }
+        /// <summary>
+        /// lấy thống kê
+        /// </summary>
+        /// <remarks>
+        /// bao gồm
+        /// - theo tháng
+        /// - doanh thu trong tuần
+        /// - số hàng sắp hết
+        /// </remarks>
+        [HttpGet("statistics")]
+        public async Task<BaseResponse<StatisticsSummaryModelView>> GetStatisticsSummaryAsync()
+        {
+            var result = await _orderService.GetStatisticsSummaryAsync();
+            return result;
         }
     }
 }

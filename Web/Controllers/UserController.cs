@@ -1,8 +1,12 @@
 ﻿using Contract.Services.Interface;
 using Core.Base;
+using Core.Store;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ModelViews.UserModelViews;
+using Services.Service;
+using System.Security.Claims;
 
 namespace Web.Controllers
 {
@@ -16,19 +20,86 @@ namespace Web.Controllers
         {
             _accountService = accountService;
         }
+        /// <summary>
+        /// lấy all user
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<BasePaginatedList<UserModelResponse>>> GetAllAccounts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<BaseResponse<BasePaginatedList<UserModelResponse>>> GetAllAccounts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
                 var accounts = await _accountService.GetAllAccounts(pageNumber, pageSize);
-                Console.WriteLine("HAHAHAAHAHA");
-                return Ok(BaseResponse<BasePaginatedList<UserModelResponse>>.OkResponse(accounts));
+                //Console.WriteLine("HAHAHAAHAHA");
+                return new BaseResponse<BasePaginatedList<UserModelResponse>>(StatusCodeHelper.OK, "200", accounts);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An error occurred while retrieving Accounts: {ex.Message}");
+                return new BaseResponse<BasePaginatedList<UserModelResponse>>(StatusCodeHelper.ServerError, "500", $"Internal server error: {ex.Message}");
             }
+        }
+        /// <summary>
+        /// lấy user profile
+        /// </summary>
+        [HttpGet("info")]
+        public async Task<BaseResponse<UserModelResponse>> GetUserById()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var accounts = await _accountService.GetUserById(userId.Value);
+                return  accounts;
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<UserModelResponse>(StatusCodeHelper.ServerError, "500", $"Internal server error: {ex.Message}");
+            }
+        }
+        [HttpPost("info")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponse<UserInfoModel>>> CreateUserInfo([FromBody] CreateUserInfo model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return BadRequest(new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
+                }
+                var result = await _accountService.CreateInfoModelAsync(model, userId.Value);
+                return result.IsSuccess ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+            }
+        }
+        [HttpPut("info")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponse<UserInfoModel>>> UpdateUserInfo([FromBody] UserInfoModel model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return BadRequest(new BaseResponse<UserInfoModel>(StatusCodeHelper.Notfound, "400", "Invalid user"));
+                }
+                var result = await _accountService.UpdateUserInfotAsync(model, userId.Value);
+                return result.IsSuccess ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BaseResponse<UserInfoModel>(StatusCodeHelper.ServerError, "500", "Internal server error"));
+            }
+        }
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                return userId;
+            }
+            return null;
         }
     }
 }
