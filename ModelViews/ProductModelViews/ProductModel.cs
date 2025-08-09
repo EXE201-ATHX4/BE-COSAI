@@ -59,7 +59,7 @@ namespace ModelViews.ProductModelViews
         public decimal? SalePrice { get; set; }
 
         // Trạng thái bán sản phẩm
-        public bool? IsOnSale { get; set; } = false;
+        public bool? IsOnSale { get; set; }
         public string? Description { get; set; }
         public string? ShortDescription { get; set; }
         public string? Ingredients { get; set; }
