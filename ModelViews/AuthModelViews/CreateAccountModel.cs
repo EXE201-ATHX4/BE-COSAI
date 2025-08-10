@@ -7,6 +7,8 @@ namespace ModelViews.AuthModelViews
     public class CreateAccountModel
     {
         [Required]
+        public string Name { get; set; }
+        [Required]
         [EmailAddress]
         public string Email { get; set; }
         [Required]

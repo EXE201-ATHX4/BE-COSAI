@@ -48,7 +48,11 @@ namespace Web.Controllers
                 _logger.LogWarning("Email already registered: {Email}", model.Email);
                 return BadRequest("Email is already registered.");
             }
-
+            var userInfo = new UserInfo
+            {
+                FullName = model.Name,
+                Gender = "Nam",
+            };
             var user = new User
             {
                 UserName = model.Email.Split('@')[0],
@@ -57,6 +61,7 @@ namespace Web.Controllers
                 SecurityStamp = Guid.NewGuid().ToString(),
                 CreatedBy = model.Email,
                 LastUpdatedBy = model.Email,
+                UserInfo = userInfo
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
